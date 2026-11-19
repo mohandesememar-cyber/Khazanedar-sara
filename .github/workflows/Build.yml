@@ -1,0 +1,29 @@
+name: Build APK
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unzip project
+        run: |
+          unzip -oq khazanehdar.zip -d _src
+          if [ -d _src/khazanehdar ]; then P=_src/khazanehdar; else P=_src; fi
+          echo "PROJ=$P" >> $GITHUB_ENV
+          ls "$P"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Accept Android licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+      - name: Build debug APK
+        working-directory: ${{ env.PROJ }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Khazanehdar-Sara-APK
+          path: ${{ env.PROJ }}/app/build/outputs/apk/debug/app-debug.apk
